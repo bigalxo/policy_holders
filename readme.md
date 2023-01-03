@@ -7,6 +7,7 @@ csv_write.py:
 Input policy_id to export policy_id.py containing list of Addresses holding policy_id 
 
 Example Input:
+
     policy_id = "427c7121856c400b69a589da28c5967cc86700530aee78302c94629a"
 
 Example Output:
@@ -24,6 +25,7 @@ csv_read.py:
 Input list of policy_id's with assosiated .csv and output holder data
 
 Example Input:
+
     list_policy_id = ['83c0ab67afc9148bd1571b7a14de1df03cd5624f5992d3b8ec84d6fb', '83cb87b69639e20d7c99755fcfc310fb47882c3591778a3c869ea34c', '8903555ad05ed1794f26240d44137717d0c8049e9133266222c4186a', 'a4b7f3bbb16b028739efc983967f1e631883f63a2671d508023b5dfb']
 
 Example Output:
@@ -54,9 +56,11 @@ get_all.py:
 Input list of policy IDs to export .csv of addresses and display report on holder data
 
 Example Input:
+
     list_policy_id = ['427c7121856c400b69a589da28c5967cc86700530aee78302c94629a', '10d11bf75e738fa5551b598868d725551aca9f833acda1bfd20fb068', 'c0e8073b9171ff085eb5e421002d314ac614632ac5ca9f230da83366']
 
 Example Output:
+
     PolicyID: 427c7121856c400b69a589da28c5967cc86700530aee78302c94629a
     Scanning Index: 1-10000
 
