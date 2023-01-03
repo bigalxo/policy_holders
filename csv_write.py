@@ -5,7 +5,6 @@ start = time.time()
 # this function writes one csv at a time given as policy_id
 policy_id = policy_id_small # see addresses.py
 
-
 async def get(url, session):
     retries = 10  # Number of retries
     delay = 10  # Delay between retries in seconds
