@@ -3,7 +3,7 @@ start = time.time()
 
 ## INPUT ##
 #list of policy_ids with assosiated .csv files
-list_policy_id = list_policy_id # see addresses.py
+list_policy_id = list_policy_id_test # see addresses.py
 
 list_all_policies = [] # [ [], [], [], [] ] one list appended for each set
 list_unique = [] # stake keys with no duplicates
@@ -45,4 +45,6 @@ num_elements = len(intersection)
 print(f'\n{num_elements} stake keys hold all {len(list_policy_id)} policies')
 print(f'{len(list_unique)} unique holders across all {len(list_policy_id)} sets')
 end = time.time()
-print(f'\n{round(end-start,2)} Seconds')
+total_time = math.ceil(end - start)
+formatted_time = format_time(total_time)
+print(f'\n{formatted_time}')

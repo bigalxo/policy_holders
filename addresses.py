@@ -7,6 +7,7 @@ import requests
 import json
 from pycardano import Address, Network
 from functools import reduce
+from format_time import *
 
 #Danketsu
 policy_id_aramar = "83c0ab67afc9148bd1571b7a14de1df03cd5624f5992d3b8ec84d6fb"
