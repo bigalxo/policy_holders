@@ -1,7 +1,7 @@
 def format_time(time_in_seconds):
-    hours = time_in_seconds // 3600
-    minutes = (time_in_seconds % 3600) // 60
-    seconds = time_in_seconds % 60
+    hours = int(time_in_seconds // 3600)
+    minutes = int((time_in_seconds % 3600) // 60)
+    seconds = round((time_in_seconds % 60), 2)
 
     time_string = ""
     if hours > 0:
@@ -12,6 +12,6 @@ def format_time(time_in_seconds):
     return time_string
 
 '''Get time between start:end in format
-total_time = math.ceil(end - start)
+total_time = round(end - start)
 formatted_time = format_time(total_time)
 print(f"Total Time: {formatted_time}")'''

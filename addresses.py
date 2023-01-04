@@ -17,6 +17,7 @@ policy_id_fourth = "a4b7f3bbb16b028739efc983967f1e631883f63a2671d508023b5dfb"
 policy_id_small = "427c7121856c400b69a589da28c5967cc86700530aee78302c94629a" # 29 assets
 policy_id_small1 = "10d11bf75e738fa5551b598868d725551aca9f833acda1bfd20fb068" # 29 assets
 policy_id_small2 = "c0e8073b9171ff085eb5e421002d314ac614632ac5ca9f230da83366" # 182 assets
+policy_id_small3 = "9079f859161ba5034c649fd1688502551f956b99231af5ff9800a3db" # 100 assets
 policy_id_big = "11ff0e0d9ad037d18e3ed575cd35a0513b8473f83008124db89f1d8f" # 11k assets
 
 list_policy_id = [policy_id_aramar, policy_id_atsuko, policy_id_daisuke, policy_id_fourth]
