@@ -1,159 +1,192 @@
-from addresses import *
-start = time.time()
+import time
+import os
+import math
+from functools import reduce
 
-## INPUT ##
-#Input: list of policy IDs
-list_policy_id = list_policy_id_test # see addresses.py
+import asyncio
+import aiohttp
+import pandas as pd
+from pycardano import Address, Network
 
-errors = []
-run_errors = []
-urls = [] # def aiohttp and asyncio
-output = [] # def aiohttp and asyncio
-list_burned = [] # counts how many burns in each policy
-list_asset_qty = []
+from addresses import list_policy_id_test as list_policy_id
 
-# Tweak to optimise asyncio efficiency
-request_size = 50 # how many calls can be made at once
-delay = 3 # Delay between retries in seconds
-run_delay = 3 # wait when one run finished before starting the next
-retries = 10 # Number of retries
-print(f'\n---------------------------------------------------------------------------')
-async def main(urls):
-    runs = math.ceil(len(urls)/request_size)
-    counter = 0
-    for i in range (runs):
-        run_errors.append(len(errors))
-        run_start = time.time()
-        urls_slice = urls[counter:(i+1)*request_size]
-        counter += request_size
+
+# asyncio params
+REQUEST_SIZE = 50 # how many calls can be made at once
+RUN_DELAY = 3 # wait when one run finished before starting the next
+RETRY_TIME = 3 # Delay between retries in seconds
+RETRIES = 10 # Number of retries
+
+# koios api params
+OFFSET_SIZE = 1000
+OFFSET_COUNT = 10
+BATCH_OFFSET = OFFSET_SIZE * OFFSET_COUNT
+
+def main():
+    start_time = time.time()
+
+    for policy_id in list_policy_id:
+        file_name = os.path.join("outputs", f"{policy_id}.csv")
+        get_addresses_for_policy(policy_id, file_name)
+
+    stake_address_lists = []
+    stake_address_set = []
+    for policy_id in list_policy_id:
+        print(f'Deriving Stake Keys from Address List in {policy_id}')
+        file_name = os.path.join("outputs", f"{policy_id}.csv")
+        df = pd.read_csv(file_name)
+
+        addresses = set()
+        for address_string in df["Address List"]:
+            if len(address_string) == 103:
+                primative_address = Address.from_primitive(address_string)
+                address = Address(staking_part=primative_address.staking_part, network=Network.MAINNET)
+                addresses.add(str(address))
+            else:
+                addresses.append(address_string)
+
+        stake_address_lists.append(list(address))
+        stake_address_set |= addresses
+
+    num_elements = len(stake_address_set)
+
+    formatted_time = format_time(time.time() - start_time)
+    print('\n---------------------------------------------------------------------------\n')
+    print('Report')
+    for i in range(len(stake_address_lists)):
+        print(
+            f"\nPolicyID: {list_policy_id[i]}"
+            f"\nHolders: {len(stake_address_lists[i])}"
+            f"\nBurned: {list_burned[i]}"
+        )
+    print(f'\n{num_elements} stake keys holding all {len(list_policy_id)} policies')
+    print(f'{len(list_unique)} unique holders across all {len(list_policy_id)} sets')
+    print(f'Request Size: {REQUEST_SIZE}\nRetry Delay: {RETRY_TIME} Seconds\nRun Delay: {RUN_DELAY} Seconds')
+    print(f'Failed Requests: {len(errors)}')
+    print(f'Accuracy: {round(100*(1 - (len(errors)/(len(list_asset_names)+len(errors)))), 2)}%')
+    print(f"Total Time: {formatted_time}")
+
+
+
+def get_addresses_for_policy(policy_id, output_file):
+    print(f'Getting Asset Names for PolicyID: {policy_id}')
+
+    asset_start_time = time.time()
+    assets = get_assets_for_policy(policy_id)
+
+    asset_names = []
+    for asset in assets:
+        asset_names.append(asset["asset_name"])
+
+    formatted_time = format_time(time.time() - asset_start_time)
+    print(f'\n\nReturned: {len(asset_names)} Assets in {formatted_time}')
+
+    urls = []
+    for asset_name in asset_names: # create URLs for each asset_name
+        urls.append(f"https://api.koios.rest/api/v0/asset_address_list?_asset_policy={policy_id}&_asset_name={asset_name}")
+
+    time.sleep(2)
+    print(f'\nGetting Addresses for Asset Names')
+    address_start_time = time.time()
+    
+    addresses = asyncio.run(make_requests(urls)) # run request
+
+    payment_addresses = []
+    for address in addresses:
+        payment_addresses.append(address["payment_address"])
+    
+    #save list_address to .csv with filename policy_id
+    df = pd.DataFrame({'Address List' : payment_addresses})
+    df.to_csv(output_file, index=False, encoding='utf-8')
+
+    formatted_time = format_time(time.time() - address_start_time)
+    print(f'\n\nReturned: {len(addresses)} Addresses in {formatted_time}')
+    print(f'\nExported: "{policy_id}.csv"')
+    print('---------------------------------------------------------------------------\n')
+
+
+def get_assets_for_policy(policy_id):
+    offset_start = 0
+    assets = []
+    while True:
+        print(f'Scanning Indexes: {offset_start} - {offset_start + BATCH_OFFSET - 1}')
+
+        urls = []
+        for offset in range(offset_start, offset_start + BATCH_OFFSET, OFFSET_SIZE):
+            urls.append(f"https://api.koios.rest/api/v0/asset_policy_info?_asset_policy={policy_id}&offset={offset}")
+
+        assets += asyncio.run(make_requests(urls))
+
+        if len(assets) % (BATCH_OFFSET) == 0: # if return was exactly 10,000, assume more than 10,000 and retry for 10,001-20,000
+            offset_start += BATCH_OFFSET
+        else:
+            return assets
+
+
+def format_time(time_in_seconds):
+    hours = int(time_in_seconds // 3600)
+    minutes = int((time_in_seconds % 3600) // 60)
+    seconds = round((time_in_seconds % 60), 2)
+
+    time_string = ""
+    if hours > 0:
+        time_string += f"{hours} Hours, "
+    if hours > 0 or minutes > 0:
+        time_string += f"{minutes} Minutes, "
+    time_string += f"{seconds} Seconds"
+    return time_string
+
+
+async def make_requests(urls):
+    batch_start = 0
+    batch_end = min(batch_start + REQUEST_SIZE, len(urls))
+    total_errors = 0
+    output = []
+    while True:
+        if batch_start >= len(urls):
+            break
+
+        start_time = time.time()
+        urls_slice = urls[batch_start: batch_end]
+
         async with aiohttp.ClientSession() as session:
-            await asyncio.gather(*[get(url, session, errors) for url in urls_slice])
-        if i != runs-1:
-            await asyncio.sleep(run_delay)
-        run_end = time.time()
-        total_time = run_end - run_start
-        formatted_time = format_time(total_time)
-        print(f' Last run: {formatted_time}, {len(errors) - run_errors[-1]} Failed Requests, {len(errors)} Total Failed Requests, {round(100*(1 - (len(errors)/(len(output)+len(errors)))), 2)}% Accuracy   ', end="")
+            results = await asyncio.gather(*[get_response(url, session) for url in urls_slice])
 
-async def get(url, session, errors):
-    for i in range(retries):
+        batch_errors = 0
+        for info, errors in results:
+            output += info
+            batch_errors += errors
+        total_errors += batch_errors
+
+        await asyncio.sleep(RUN_DELAY)
+
+        formatted_time = format_time(time.time() - start_time)
+        print(
+            f'Last batch: {formatted_time}, '
+            f'{batch_errors} Failed Requests, '
+            f'{total_errors} Total Failed Requests, '
+            f'{round(100 * (1 - (total_errors / (len(output) + total_errors))), 2)}% Accuracy',
+        )
+
+        batch_start += REQUEST_SIZE
+        batch_end = min(batch_start + REQUEST_SIZE, len(urls))
+
+    return output
+
+
+async def get_response(url, session):
+    for retry in range(RETRIES):
         try:
             async with session.get(url=url) as response:
                 info = await response.json()
-                output.append(info)
-                print("\r{:.2f}%".format(len(output)/len(urls)*100), end="")
-                break
-        except Exception as e:
-            errors.append(0)
-            if i < retries - 1:  # Not the last retry
-                await asyncio.sleep(delay)
-            else:  # Last retry
-                print("\rFailed to get url {} after {} retries".format(url, retries))
-
-#Koios
-#Input: list_policy_id
-#Output: list_asset_names
-for policy_id in list_policy_id:
-    time_assets_start = time.time()
-    #reset arrays for new policy_id
-    list_asset_names = []
-    offset = 0 #counts offset for pagination
-    offset_counter = 10 #limits 10 offset pagination requests at a time
-    scanned_counter = 0 
-    print(f'PolicyID: {policy_id}\n')
-    print('Getting Asset Names')
-    while True:
-        #reset arrays for new request
-        urls = []
-        output = []
-        print(f'\rScanning Index: {offset+1}-{offset+10000}')
-        for i in range(offset_counter-10, offset_counter):#create URLs for 10 offsets
-            urls.append("https://api.koios.rest/api/v0/asset_policy_info?_asset_policy={}&offset={}".format(policy_id, offset))
-            offset += 1000
-        asyncio.run(main(urls)) #run 10 requests, return output
-        for i in range(0,len(output)): 
-            scanned_counter += len(output[i])
-            for j in range(0,len(output[i])):
-                list_asset_names.append(output[i][j]["asset_name"])
-        list_asset_qty.append(len(list_asset_names))
-        if scanned_counter % 10000 == 0: # if return was exactly 10,000, assume more than 10,000 and retry for 10,001-20,000
-            offset_counter += 10
-            continue
-        else: # all asset_names have been collected, find assosiated addresses
-            time_assets_end = time.time()
-            total_time = round((time_assets_end - time_assets_start), 2)
-            formatted_time = format_time(total_time)
-            print(f'\n\nReturned: {scanned_counter} Assets in {formatted_time}')
-            print(f'\rTotal Asset Names: {len(list_asset_names)}')
-            #reset arrays for new request
-            urls = [] 
-            output = []
-            list_address = []
-            for i in range(0,len(list_asset_names)): # create URLs for each asset_name
-                if list_asset_names[i]:                    
-                    urls.append("https://api.koios.rest/api/v0/asset_address_list?_asset_policy="+policy_id+"&_asset_name=" + list_asset_names[i])
-            time_addresses_start = time.time()
-            print(f'\nGetting Addresses for Asset Names')
-            time.sleep(2)
-            result = asyncio.run(main(urls)) # run request
-            for i in range(0,len(output)):
-                if output[i]:
-                    list_address.append(output[i][0]["payment_address"])
-            list_burned.append(len(list_asset_names)-len(list_address))
-            #save list_address to .csv with filename policy_id
-            df = pd.DataFrame ({'Address List' : list_address})
-            df.to_csv(policy_id + '.csv', index=False, encoding='utf-8')
-            time_addresses_end = time.time()
-            total_time = round((time_addresses_end - time_addresses_start), 2)           
-            formatted_time = format_time(total_time)
-            print(f'\n\nReturned: {len(list_address)} Addresses in {formatted_time}')
-            print(f'Burned: {list_burned[-1]}')
-            print(f'\nExported: "{policy_id}.csv"')
-            print('---------------------------------------------------------------------------\n')
-
-            break
+                return info, retry
+        except Exception:
+            await asyncio.sleep(RETRY_TIME)
+    print(f"Failed to get url {url} after {RETRIES} retries")
+    return [], retry
             
 
-list_get_all = [] # [ [], [], [], [] ] one list appended for each set
-list_unique = [] # stake keys with no duplicates
-for policy_id in list_policy_id:
-    a = pd.read_csv(policy_id+'.csv')
-    b = a.to_dict()
-    stake = []
-    print(f'Deriving Stake Keys from Address List in {policy_id}')
-    for i in range(0,len(b['Address List'])):
-        c = b['Address List'][i]
-        if len(c) == 103:
-            addr = Address.from_primitive(c)
-            addr2 = Address(staking_part=addr.staking_part, network=Network.MAINNET)
-            if addr2 not in stake:
-                stake.append(addr2)
-                if addr2 not in list_unique:
-                    list_unique.append(addr2)
-        else:
-            if c not in stake:
-                stake.append(c)
-                if c not in list_unique:
-                    list_unique.append(c)
-    list_get_all.append(stake)
 
-#get stake keys holding all policies
-sets = [set([str(a) for a in l]) for l in list_get_all] # Convert the lists to sets
-intersection = reduce(lambda s1, s2: s1.intersection(s2), sets) # Find the intersection of all the sets
-num_elements = len(intersection) # Find the number of elements in the intersection
 
-#get time from start to finish
-end = time.time()
-total_time = round((end - start), 2)
-formatted_time = format_time(total_time)
-print('\n---------------------------------------------------------------------------\n')
-print('Report')
-print(list_address)
-for i in range (len(list_get_all)):
-    print(f'\nPolicyID: {list_policy_id[i]}\nAssets: {len(list_address[i])}\nHolders: {len(list_get_all[i])}\nBurned: {list_burned[i]}')
-print(f'\n{num_elements} stake keys holding all {len(list_policy_id)} policies')
-print(f'{len(list_unique)} unique holders across all {len(list_policy_id)} sets')
-print(f'Request Size: {request_size}\nRetry Delay: {delay} Seconds\nRun Delay: {run_delay} Seconds')
-print(f'Failed Requests: {len(errors)}')
-print(f'Accuracy: {round(100*(1 - (len(errors)/(len(list_asset_names)+len(errors)))), 2)}%')
-print(f"Total Time: {formatted_time}")
+if __name__ == "__main__":
+    main()

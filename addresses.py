@@ -1,15 +1,4 @@
-import pandas as pd
-import time
-import asyncio
-import aiohttp
-import math
-import requests
-import json
-from pycardano import Address, Network
-from functools import reduce
-from format_time import *
-
-#Danketsu
+# Danketsu
 policy_id_aramar = "83c0ab67afc9148bd1571b7a14de1df03cd5624f5992d3b8ec84d6fb"
 policy_id_atsuko = "83cb87b69639e20d7c99755fcfc310fb47882c3591778a3c869ea34c"
 policy_id_daisuke = "8903555ad05ed1794f26240d44137717d0c8049e9133266222c4186a"
@@ -21,6 +10,4 @@ policy_id_small3 = "9079f859161ba5034c649fd1688502551f956b99231af5ff9800a3db" # 
 policy_id_big = "11ff0e0d9ad037d18e3ed575cd35a0513b8473f83008124db89f1d8f" # 11k assets
 
 list_policy_id = [policy_id_aramar, policy_id_atsuko, policy_id_daisuke, policy_id_fourth]
-
 list_policy_id_test = [policy_id_small, policy_id_small1, policy_id_small2]
-
