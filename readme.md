@@ -1,18 +1,18 @@
-# policy_holders
+# DanketsuStatBot
 
-Give a list of policyIDs go return relational data of those policies.
+Find relational data between the four Danketsu policies and tweet the report as @DanketsuStatBot
 
 ## API Source
 
-api.koios.rest 
+https://api.koios.rest/
 
 ## Files
 
 ### policies.py:
 
-Gives example policyIDs to scan as strings and lists of strings
+Example policyIDs as strings and lists of strings
 
-### policy_holders.py:
+### report.py:
 
 Input list of policy IDs from policies.py to export .csv of addresses and display report on holder data
 
