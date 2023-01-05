@@ -41,7 +41,7 @@ async def get(url, session, errors):
             async with session.get(url=url) as response:
                 info = await response.json()
                 output.append(info)
-                print("\r{:.2f}%".format(len(output)/len(urls)*100), end="")
+                print(f'\r{len(output)/len(urls)*100:.2f}%', end='')
                 break
         except Exception as e:
             errors.append(0)
@@ -110,7 +110,6 @@ for policy_id in list_policy_id:
             print(f'Burned: {list_burned[-1]}')
             print(f'\nExported: "{policy_id}.csv"')
             print('---------------------------------------------------------------------------\n')
-
             break
             
 
@@ -148,12 +147,14 @@ total_time = round((end - start), 2)
 formatted_time = format_time(total_time)
 print('\n---------------------------------------------------------------------------\n')
 print('Report')
-print(list_address)
 for i in range (len(list_get_all)):
-    print(f'\nPolicyID: {list_policy_id[i]}\nAssets: {len(list_address[i])}\nHolders: {len(list_get_all[i])}\nBurned: {list_burned[i]}')
+    print(f'\nPolicyID: {list_policy_id[i]}\nAssets: {list_asset_qty[i]}\nHolders: {len(list_get_all[i])}\nBurned: {list_burned[i]}')
 print(f'\n{num_elements} stake keys holding all {len(list_policy_id)} policies')
 print(f'{len(list_unique)} unique holders across all {len(list_policy_id)} sets')
 print(f'Request Size: {request_size}\nRetry Delay: {delay} Seconds\nRun Delay: {run_delay} Seconds')
 print(f'Failed Requests: {len(errors)}')
-print(f'Accuracy: {round(100*(1 - (len(errors)/(len(list_asset_names)+len(errors)))), 2)}%')
+print(f'Accuracy: {round(100*(1 - (len(errors)/(sum(list_asset_qty)+len(errors)))), 2)}%')
 print(f"Total Time: {formatted_time}")
+
+print(len(stake))
+print(len(list_unique))
