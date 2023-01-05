@@ -1,6 +1,6 @@
-# DanketsuStatBot
+# @DanketsuStatBot
 
-Find relational data between the four Danketsu policies and tweet the report as @DanketsuStatBot
+Find relational data between the four Danketsu policies and tweet the report
 
 ## API Source
 
@@ -99,3 +99,7 @@ Input list of policy IDs from policies.py to export .csv of addresses and displa
     Failed Requests: 36
     Accuracy: 87.14%
     Total Time: 1 Minutes, 1.67 Seconds
+
+## TODO
+
+Add Twitter API to tweet report
