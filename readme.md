@@ -8,9 +8,15 @@ https://api.koios.rest/
 
 ## Files
 
+### twitter.py:
+
+Run report.py and tweet the results
+
 ### policies.py:
 
 Example policyIDs as strings and lists of strings
+
+Also contains some exchange addresses which are not currently utilised
 
 ### report.py:
 
@@ -102,4 +108,5 @@ Input list of policy IDs from policies.py to export .csv of addresses and displa
 
 ## TODO
 
-Add Twitter API to tweet report
+Add Twitter API to tweet report DONE
+Add Exchange data to report
