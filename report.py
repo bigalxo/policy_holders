@@ -8,14 +8,14 @@ import aiohttp
 import pandas as pd
 from pycardano import Address, Network
 
-from policies import list_policy_id_test as policy_ids
+from policies import list_policy_id as policy_ids
 
 
 # asyncio params
 BATCH_SIZE = 50 # Quantity of calls made concurrently
-RUN_DELAY = 3 # Delay between runs
-RETRY_DELAY = 2 # Delay between retries in seconds
-RETRIES = 10 # Number of retries
+RUN_DELAY = 5 # Delay between runs
+RETRY_DELAY = 3 # Delay between retries in seconds
+RETRIES = 1000 # Number of retries
 
 # koios api params
 OFFSET_SIZE = 1000
@@ -76,6 +76,7 @@ def main():
     print(f'Fails: {error_total}')
     print(f'Accuracy: {round(100 * (asset_total / (asset_total + error_total)), 2)}%')
     print(f"Time: {formatted_time}")
+    return all_mutual_addresses, global_stake_addresses, len(policy_ids)
 
 
 def get_addresses_for_policy(policy_id, output_file):
@@ -97,7 +98,6 @@ def get_addresses_for_policy(policy_id, output_file):
         urls.append(f"https://api.koios.rest/api/v0/asset_address_list?_asset_policy={policy_id}&_asset_name={asset_name}")
 
     print(f'\nGetting Addresses for Asset Names')
-    time.sleep(RUN_DELAY)
     address_start_time = time.time()
 
     addresses, errors = asyncio.run(make_requests(urls)) # run request
@@ -184,7 +184,9 @@ async def make_requests(urls):
             f'{batch_errors} Fails, '
             f'{round(100 * (1 - (batch_errors / (BATCH_SIZE+batch_errors))), 2)}% Accuracy',
         )
+        print(f'\r{RUN_DELAY} Second Batch Delay', end='')
         time.sleep(RUN_DELAY)
+        print('\r                                 ', end='')
 
         batch_start += BATCH_SIZE
         batch_end = min(batch_start + BATCH_SIZE, len(urls))
@@ -204,8 +206,6 @@ async def get_response(url, session, len_urls, batch_done):
             await asyncio.sleep(RETRY_DELAY)
     print(f"Failed to get url {url} after {RETRIES} retries")
     return [], retry
-            
-
 
 
 if __name__ == "__main__":
