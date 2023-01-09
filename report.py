@@ -2,19 +2,20 @@ import time
 import os
 import math
 from functools import reduce
+import copy
 
 import asyncio
 import aiohttp
 import pandas as pd
 from pycardano import Address, Network
 
-from policies import list_policy_id as policy_ids
+from policies import list_policy_id_test as policy_ids
 
 
 # asyncio params
-BATCH_SIZE = 50 # Quantity of calls made concurrently
+BATCH_SIZE = 100 # Quantity of calls made concurrently
 RUN_DELAY = 5 # Delay between runs
-RETRY_DELAY = 3 # Delay between retries in seconds
+RETRY_DELAY = 5 # Delay between retries in seconds
 RETRIES = 1000 # Number of retries
 
 # koios api params
@@ -39,6 +40,7 @@ def main():
 
     global_stake_addresses = set() # List of unique Stake addresses across all policies
     stake_addresses = {} # List of Stake addresses per policy_id
+    stake_addresses_three = {}
     for policy_id in policy_ids: # Read .csv, update vars
         print(f'Deriving Stake Keys from Address List in {policy_id}')
 
@@ -52,9 +54,11 @@ def main():
 
             policy_stake_addresses.add(address)
             global_stake_addresses.add(address)
-
+        if policy_id != 'a4b7f3bbb16b028739efc983967f1e631883f63a2671d508023b5dfb':
+            stake_addresses_three[policy_id] = policy_stake_addresses
         stake_addresses[policy_id] = policy_stake_addresses
 
+    just_three = reduce(lambda s1, s2: s1.intersection(s2), stake_addresses_three.values())
     #convert stake_addresses_lists to satisfy "Stake keys holding all policies" 
     all_mutual_addresses = reduce(lambda s1, s2: s1.intersection(s2), stake_addresses.values())
 
@@ -76,7 +80,7 @@ def main():
     print(f'Fails: {error_total}')
     print(f'Accuracy: {round(100 * (asset_total / (asset_total + error_total)), 2)}%')
     print(f"Time: {formatted_time}")
-    return all_mutual_addresses, global_stake_addresses, len(policy_ids)
+    return len(all_mutual_addresses), len(global_stake_addresses), len(policy_ids), len(just_three)
 
 
 def get_addresses_for_policy(policy_id, output_file):
@@ -202,7 +206,7 @@ async def get_response(url, session, len_urls, batch_done):
                 pct = (len(batch_done)/len_urls)*100
                 print("\r{:.2f}%".format(pct), end="")
                 return info, retry
-        except Exception:
+        except Exception as e:
             await asyncio.sleep(RETRY_DELAY)
     print(f"Failed to get url {url} after {RETRIES} retries")
     return [], retry
