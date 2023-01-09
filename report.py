@@ -9,11 +9,11 @@ import aiohttp
 import pandas as pd
 from pycardano import Address, Network
 
-from policies import list_policy_id_test as policy_ids
+from policies import list_policy_id as policy_ids
 
 
 # asyncio params
-BATCH_SIZE = 100 # Quantity of calls made concurrently
+BATCH_SIZE = 90 # Quantity of calls made concurrently
 RUN_DELAY = 5 # Delay between runs
 RETRY_DELAY = 5 # Delay between retries in seconds
 RETRIES = 1000 # Number of retries

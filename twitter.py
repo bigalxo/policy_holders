@@ -15,8 +15,9 @@ def main():
     mutual_stake_addresses, global_stake_addresses, len_policy_ids, just_three = report() # Run report
     aramar_floor, atsuko_floor, daisuke_floor, fourth_floor =  floor() # grab floor prices
     mutual_change, global_change, aramar_change, atsuko_change, daisuke_change, fourth_change, three_change = change(mutual_stake_addresses, global_stake_addresses, aramar_floor, atsuko_floor, daisuke_floor, fourth_floor, just_three) # Get Daily change
+    
     tweet(
-    f'TESTING Daily Report:\n'
+    f'Daily Report:\n'
     f'\n'
     f'Floors:\n'
     f'Aramar: {atsuko_floor}{ADA}  {aramar_change}{ADA}\n'
@@ -79,39 +80,3 @@ def tweet(text):
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-'''def change123(mutual_stake_addresses, global_stake_addresses, aramar_floor, atsuko_floor, daisuke_floor, fourth_floor) : # Calculate daily change 
-    # Get yesterdays stats
-    with open("outputs/yesterday.txt", "r") as f:
-        mutual_yesterday, global_yesterday = map(int, f.read().split())
-    # Store for tomorrow
-    with open("outputs/yesterday.txt", "w") as f:
-        f.write(str(mutual_stake_addresses) + " " + str(global_stake_addresses))
-    mutual_change = mutual_stake_addresses - mutual_yesterday
-    global_change = global_stake_addresses - global_yesterday
-    #Assign up down, or no change
-    if mutual_change == 0:
-        mutual_change = ""
-    else:
-        if mutual_change > 0:
-            mutual_change = f'{UP}{mutual_change}'
-        else:
-            if mutual_change < 0:
-                mutual_change = f'{DOWN}{abs(mutual_change)}'
-    if global_change == 0:
-        global_change = ""
-    else:
-        if global_change > 0:
-            global_change = f'{UP}{global_change}'
-        else:
-            if global_change < 0:
-                global_change = f'{DOWN}{abs(global_change)}'
-    return mutual_change, global_change'''
