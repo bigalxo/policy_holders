@@ -27,3 +27,22 @@ policy_ids = {  '83c0ab67afc9148bd1571b7a14de1df03cd5624f5992d3b8ec84d6fb' : 'Ar
                 '83cb87b69639e20d7c99755fcfc310fb47882c3591778a3c869ea34c' : 'Atsuko'  ,
                 '8903555ad05ed1794f26240d44137717d0c8049e9133266222c4186a' : 'Daisuke' ,
                 'a4b7f3bbb16b028739efc983967f1e631883f63a2671d508023b5dfb' : 'Fourth'  }
+
+policies = [
+    {
+        "name": "Aramar",
+        "id": "83c0ab67afc9148bd1571b7a14de1df03cd5624f5992d3b8ec84d6fb"
+    },
+    {
+        "name": "Atsuko",
+        "id": "83cb87b69639e20d7c99755fcfc310fb47882c3591778a3c869ea34c"
+    },
+    {
+        "name": "Daisuke",
+        "id": "8903555ad05ed1794f26240d44137717d0c8049e9133266222c4186a"
+    },
+    {
+        "name": "Fourth",
+        "id": "a4b7f3bbb16b028739efc983967f1e631883f63a2671d508023b5dfb"
+    }
+]
